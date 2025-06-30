@@ -1,0 +1,66 @@
+import pandas as pd
+from fpdf import FPDF
+
+# File path
+FILE_PATH = "sales_data.csv"
+
+# Read data from CSV
+def read_data(file_path):
+    return pd.read_csv(file_path)
+
+# Analyze data
+def analyze_data(df):
+    total_sales = df['Sales'].sum()
+    avg_sales = df['Sales'].mean()
+    max_sales = df['Sales'].max()
+    min_sales = df['Sales'].min()
+    region_sales = df.groupby('Region')['Sales'].sum().to_dict()
+
+    return {
+        'total_sales': total_sales,
+        'avg_sales': avg_sales,
+        'max_sales': max_sales,
+        'min_sales': min_sales,
+        'region_sales': region_sales
+    }
+
+# Generate PDF report
+def generate_pdf_report(summary, filename='report.pdf'):
+    pdf = FPDF()
+    pdf.add_page()
+    pdf.set_font("Arial", size=12)
+
+    pdf.set_text_color(0, 0, 128)
+    pdf.cell(200, 10, txt="Sales Report", ln=True, align='C')
+    pdf.ln(10)
+
+    pdf.set_text_color(0, 0, 0)
+    pdf.cell(200, 10, txt=f"Total Sales: ${summary['total_sales']:.2f}", ln=True)
+    pdf.cell(200, 10, txt=f"Average Sales: ${summary['avg_sales']:.2f}", ln=True)
+    pdf.cell(200, 10, txt=f"Max Sales: ${summary['max_sales']:.2f}", ln=True)
+    pdf.cell(200, 10, txt=f"Min Sales: ${summary['min_sales']:.2f}", ln=True)
+    pdf.ln(10)
+
+    pdf.set_font("Arial", style='B', size=12)
+    pdf.cell(200, 10, txt="Sales by Region:", ln=True)
+    pdf.set_font("Arial", size=12)
+
+    for region, sales in summary['region_sales'].items():
+        pdf.cell(200, 10, txt=f"{region}: ${sales:.2f}", ln=True)
+
+    pdf.output(filename)
+    print(f"PDF report saved as '{filename}'")
+
+# Main function
+def main():
+    try:
+        df = read_data(FILE_PATH)
+        summary = analyze_data(df)
+        generate_pdf_report(summary)
+    except FileNotFoundError:
+        print(f"File '{FILE_PATH}' not found.")
+    except Exception as e:
+        print("An error occurred:", e)
+
+if __name__ == "__main__":
+    main()

@@ -1,0 +1,81 @@
+import nltk
+import numpy as np
+import random
+import string
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.metrics.pairwise import cosine_similarity
+
+# Download required resources
+nltk.download('punkt')
+nltk.download('wordnet')
+
+# Sample corpus or knowledge base
+corpus = """
+Hello! I am your friendly chatbot.
+I can help answer questions about basic topics.
+Natural language processing is a field of Artificial Intelligence.
+It helps computers understand human language.
+Python is a popular programming language used for AI.
+You can use libraries like NLTK or spaCy for NLP tasks.
+What would you like to learn today?
+"""
+
+# Tokenize corpus into sentences
+sent_tokens = nltk.sent_tokenize(corpus)
+
+# Lemmatizer to normalize text
+lemmer = nltk.stem.WordNetLemmatizer()
+
+def LemTokens(tokens):
+    return [lemmer.lemmatize(token.lower()) for token in tokens if token not in string.punctuation]
+
+remove_punct_dict = dict((ord(punct), None) for punct in string.punctuation)
+
+def normalize(text):
+    return LemTokens(nltk.word_tokenize(text.lower().translate(remove_punct_dict)))
+
+# Greeting keywords and responses
+greet_inputs = ("hello", "hi", "greetings", "hey", "what's up")
+greet_responses = ["Hi there!", "Hello!", "Greetings!", "Hey!", "I'm here to help!"]
+
+def greet(sentence):
+    for word in sentence.split():
+        if word.lower() in greet_inputs:
+            return random.choice(greet_responses)
+
+# Generate response
+def generate_response(user_input):
+    sent_tokens.append(user_input)
+    vectorizer = TfidfVectorizer(tokenizer=normalize, stop_words='english')
+    tfidf = vectorizer.fit_transform(sent_tokens)
+    vals = cosine_similarity(tfidf[-1], tfidf[:-1])
+    idx = vals.argsort()[0][-1]
+    flat = vals.flatten()
+    flat.sort()
+    score = flat[-1]
+
+    sent_tokens.pop()  # Remove user input from tokens
+
+    if score == 0:
+        return "I'm sorry, I don't understand that. Can you rephrase?"
+    else:
+        return sent_tokens[idx]
+
+# Main chat function
+def chatbot():
+    print("Bot: Hello! I'm a chatbot. Type 'bye' to exit.")
+    while True:
+        user_input = input("You: ")
+        user_input = user_input.lower()
+
+        if user_input == 'bye':
+            print("Bot: Goodbye! Have a nice day.")
+            break
+        elif greet(user_input) is not None:
+            print("Bot:", greet(user_input))
+        else:
+            print("Bot:", generate_response(user_input))
+
+# Run chatbot
+if __name__ == "__main__":
+    chatbot()

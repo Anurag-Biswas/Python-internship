@@ -1,0 +1,56 @@
+import requests
+import matplotlib.pyplot as plt
+import seaborn as sns
+from datetime import datetime
+
+# Replace with your OpenWeatherMap API key
+API_KEY = "your_api_key_here"
+CITY = "London"
+UNITS = "metric"  # or 'imperial' for Fahrenheit
+URL = f"http://api.openweathermap.org/data/2.5/forecast?q={CITY}&units={UNITS}&appid={API_KEY}"
+
+def fetch_weather_data():
+    response = requests.get(URL)
+    if response.status_code == 200:
+        return response.json()
+    else:
+        print("Failed to fetch data:", response.status_code)
+        return None
+
+def parse_weather_data(data):
+    timestamps = []
+    temps = []
+    humidity = []
+    
+    for entry in data['list']:
+        dt = datetime.strptime(entry['dt_txt'], '%Y-%m-%d %H:%M:%S')
+        temp = entry['main']['temp']
+        hum = entry['main']['humidity']
+        timestamps.append(dt)
+        temps.append(temp)
+        humidity.append(hum)
+
+    return timestamps, temps, humidity
+
+def plot_weather(timestamps, temps, humidity):
+    sns.set(style="darkgrid")
+    
+    plt.figure(figsize=(12, 6))
+    plt.plot(timestamps, temps, marker='o', label='Temperature (°C)', color='orange')
+    plt.plot(timestamps, humidity, marker='x', label='Humidity (%)', color='blue')
+    plt.xlabel("Time")
+    plt.ylabel("Value")
+    plt.title(f"5-Day Weather Forecast for {CITY}")
+    plt.legend()
+    plt.xticks(rotation=45)
+    plt.tight_layout()
+    plt.show()
+
+def main():
+    data = fetch_weather_data()
+    if data:
+        timestamps, temps, humidity = parse_weather_data(data)
+        plot_weather(timestamps, temps, humidity)
+
+if __name__ == "__main__":
+    main()
